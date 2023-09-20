@@ -5,7 +5,6 @@ import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import ToolbarPlugin from "./plugins/ToolbarPlugin.tsx";
 import ImagesPlugin from "./plugins/ImagePlugin.tsx";
 import {ImageNode} from "./nodes/ImageNode.tsx";
-import {PastedImagePlugin} from "./plugins/PastedImagePlugin.tsx";
 
 const theme = {}
 
@@ -31,7 +30,6 @@ export function Editor() {
         ErrorBoundary={LexicalErrorBoundary}
       />
       <ImagesPlugin/>
-      <PastedImagePlugin/>
     </LexicalComposer>
   );
 }

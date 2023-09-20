@@ -1,12 +1,12 @@
 import {useLexicalComposerContext} from "@lexical/react/LexicalComposerContext";
-import {$wrapNodeInElement, mergeRegister} from "@lexical/utils";
+import {$wrapNodeInElement} from "@lexical/utils";
 import {
   $createParagraphNode,
   $insertNodes,
   $isRootOrShadowRoot,
   COMMAND_PRIORITY_EDITOR,
   createCommand,
-  LexicalCommand
+  LexicalCommand, PASTE_COMMAND
 } from "lexical";
 import {useEffect} from "react";
 
@@ -28,22 +28,40 @@ export default function ImagesPlugin() {
       throw new Error("ImagesPlugin: ImageNode not registered on editor");
     }
 
+    editor.registerCommand<InsertImagePayload>(
+      INSERT_IMAGE_COMMAND,
+      (payload) => {
+        const imageNode = $createImageNode(payload);
+        $insertNodes([imageNode]);
+        if ($isRootOrShadowRoot(imageNode.getParentOrThrow())) {
+          $wrapNodeInElement(imageNode, $createParagraphNode).selectEnd();
+        }
 
-    return mergeRegister(
-      editor.registerCommand<InsertImagePayload>(
-        INSERT_IMAGE_COMMAND,
-        (payload) => {
-          const imageNode = $createImageNode(payload);
-          $insertNodes([imageNode]);
-          if ($isRootOrShadowRoot(imageNode.getParentOrThrow())) {
-            $wrapNodeInElement(imageNode, $createParagraphNode).selectEnd();
-          }
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+    editor.registerCommand<ClipboardEvent>(
+      PASTE_COMMAND,
+      (event) => {
+        if (!event.clipboardData) {
+          return false;
+        }
+
+        const file = event.clipboardData.files[0];
+        if (file && file.type.startsWith("image/")) {
+          editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+            altText: file.name,
+            src: URL.createObjectURL(file),
+          });
 
           return true;
-        },
-        COMMAND_PRIORITY_EDITOR
-      )
-    );
+        }
+
+        return false;
+      },
+      COMMAND_PRIORITY_EDITOR
+    )
   }, [editor]);
 
   return null;
